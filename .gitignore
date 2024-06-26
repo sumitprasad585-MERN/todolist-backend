@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+
+# Do not push the private config to scm
+config.private.env
+
