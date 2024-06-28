@@ -1,5 +1,6 @@
 const Todo = require("../models/todoModel");
 const ApiFeatures = require("../utils/ApiFeatures");
+const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
 const getAllTodos = catchAsync(async (req, res, next) => {
@@ -23,10 +24,7 @@ const getAllTodos = catchAsync(async (req, res, next) => {
 const getTodo = catchAsync(async (req, res, next) => {
   const todo = await Todo.findById(req.params.id);
   if (!todo) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'todo not found'
-    });
+    return next(new AppError(404, 'todo not found'));
   }
   res.status(200).json({
     status: 'success',
