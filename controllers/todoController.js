@@ -1,8 +1,16 @@
 const Todo = require("../models/todoModel");
+const ApiFeatures = require("../utils/ApiFeatures");
 const catchAsync = require("../utils/catchAsync");
 
 const getAllTodos = catchAsync(async (req, res, next) => {
-  const todos = await Todo.find({});
+  const apiFeatures = new ApiFeatures(Todo.find({}), req.query)
+                            .enableSearchByFieldsFor('name', 'summary')
+                            .filter()
+                            .sort()
+                            .limitFields()
+                            .paginate();
+
+  const todos = await apiFeatures.query;
   res.status(200).json({
     status: 'success',
     length: todos.length,
