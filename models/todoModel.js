@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { default: slugify } = require('slugify');
 
 const todoSchema = new mongoose.Schema({
   name: {
@@ -74,9 +75,12 @@ function assignListScore(document, next) {
   next();
 }
 
-/** Add a pre save hook to assign a list score based on priority */
+/** Add a pre save hook to assign a list score based on priority
+ * Also, add a slug for the todo name
+ */
 todoSchema.pre('save', function (next) {
   /** 'this' refers to document here */
+  this.slug = slugify(this.name, { lower: true });
   assignListScore(this, next);
 });
 
