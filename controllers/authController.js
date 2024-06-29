@@ -194,7 +194,10 @@ const updatePassword = catchAsync(async (req, res, next) => {
 
 const restrictTo = (...roles) => {
   return (req, res, next) => {
+    if (!roles.includes(req.user.role))
+      return next(new AppError(403, 'You are not authorized to perform this action'));
 
+    next();
   }
 };
 

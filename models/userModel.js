@@ -107,6 +107,13 @@ userSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
+/** Pre find hook so that only active user are selected  */
+userSchema.pre(/^find/, function (next) {
+  /** 'this' refers to query object here */
+  this.find({ active: {$ne: false} });
+  next();
+});
+
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 
