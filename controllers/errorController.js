@@ -52,6 +52,17 @@ const globalErrorHandler = (err, req, res, next) => {
       error = new AppError(400, message);
     }
 
+    /** Handle the JsonWebTokenError and TokenExpiredError */
+    if (error.name === 'JsonWebTokenError') {
+      const message = 'The access token is invalid. Please login again';
+      error = new AppError(401, message);
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      const message = 'Token Expired! Please login again';
+      error = new AppError(401, message);
+    }
+
     sendErrorForProductionEnv(error, res);
   }
 }

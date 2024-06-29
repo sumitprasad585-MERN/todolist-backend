@@ -74,6 +74,17 @@ userSchema.methods.verifyPassword = async function (userPassword, dbPassword) {
   return correct;
 }
 
+/** Instance method on user schema to check if password was changed after issuing the token*/
+userSchema.methods.didPasswordChange = function (issuedJwtTimestamp) {
+  /** 'this' refers to document here */
+  if (this.passwordChangedAt) {
+    const changedPasswordTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return changedPasswordTimestamp > issuedJwtTimestamp;
+  }
+
+  return false;
+}
+
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 

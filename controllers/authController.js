@@ -67,7 +67,32 @@ const login = catchAsync(async (req, res, next) => {
 });
 
 const protect = catchAsync(async (req, res, next) => {
+  /** Check if the bearer token is passed with the request */
+  let { authorization } = req.headers;
+  let token;
+  if (authorization && authorization.startsWith('Bearer'))
+    token = authorization.split(' ')[1];
 
+  if (!token)
+    return next(new AppError(401, 'You are not logged in, please login'));
+
+  /** Verify the token. If token is malformed, then error would be thrown while decoding */
+  const decoded = await (jwt.verify)(token, process.env.JWT_SECRET);
+
+  /** Check if user still exists and not deleted */
+  const user = await User.findById(decoded.id);
+
+  if (!user)
+    return next(new AppError(401, 'User deleted'));
+
+  /** Check if password was changed after issuing the token */
+  const passwordWasChanged = user.didPasswordChange(decoded.iat);
+  if (passwordWasChanged)
+    return next(new AppError(401, 'Password was changed, please login with new credentials'));
+
+  /** Add the user on the request object and grant access */
+  req.user = user;
+  next();
 });
 
 const forgotPassword = catchAsync(async (req, res, next) => {
