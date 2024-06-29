@@ -19,7 +19,7 @@ app.use('/api/v1/todos', todoRouter);
 app.use('/api/v1/users', userRouter);
 
 app.use('*', (req, res, next) => {
-  const message = `${req.method} to resource ${req.originalUrl} not found on the server ${req.protocol}://${req.hostname}`;
+  const message = `${req.method} to resource ${req.originalUrl} not found on the server ${req.protocol}://${req.get('host')}`;
   next(new AppError(404, message));
 });
 

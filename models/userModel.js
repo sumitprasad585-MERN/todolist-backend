@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const crypto = require('crypto');
 const { promisify } = require('util');
 
 const userSchema = new mongoose.Schema({
@@ -67,12 +68,21 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+/** pre save hook to update the passwordChangedAt field when password is changed */
+userSchema.pre('save', function (next) {
+  /** 'this' refers to document here */
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000; /* password change should happen before new jwt token issue */
+  next();
+})
+
 /** Instance method on user schema to check if password is correct */
 userSchema.methods.verifyPassword = async function (userPassword, dbPassword) {
   /** 'this' refers to document here*/
   const correct = await promisify(bcrypt.compare)(userPassword, dbPassword);
   return correct;
-}
+};
 
 /** Instance method on user schema to check if password was changed after issuing the token*/
 userSchema.methods.didPasswordChange = function (issuedJwtTimestamp) {
@@ -83,7 +93,19 @@ userSchema.methods.didPasswordChange = function (issuedJwtTimestamp) {
   }
 
   return false;
-}
+};
+
+/** Instance method on user schema to create password reset token */
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  const validForHours = 1;
+  this.passwordResetToken = hashedToken;
+  this.passwordResetTokenExpiresAt = Date.now() + 1000 * 60 * 60 * validForHours;
+
+  return resetToken;
+};
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
