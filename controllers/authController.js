@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const jwt = require('jsonwebtoken');
 
@@ -32,7 +33,37 @@ const signup = catchAsync(async (req, res, next) => {
 });
 
 const login = catchAsync(async (req, res, next) => {
+  const { username, email, password } = req.body;
+  let user  = null;
 
+  /** Find the user, the user can login with either username or email */
+  if (username) {
+    user = await User.findOne({ username }).select('+password');
+  } else {
+    user = await User.findOne({ email }).select('+password');
+  }
+
+  /** Check if the password is correct, only if user is found */
+  let correct = false;
+  if (user) {
+    correct =  await user.verifyPassword(password, user.password);
+  }
+
+  /** Return 400 if incorrect credentials or user not found */
+  if (!user || !correct) {
+    return next(new AppError(400, 'Incorrect credentials'));
+  }
+
+  /** Sign the token */
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
+
+  /** Send the token */
+  res.status(200).json({
+    status: 'success',
+    token
+  });
 });
 
 const protect = catchAsync(async (req, res, next) => {

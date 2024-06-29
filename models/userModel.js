@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const { promisify } = require('util');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -33,7 +34,8 @@ const userSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-    minLength: [3, 'username must be atleast 3 character long']
+    minLength: [3, 'username must be atleast 3 character long'],
+    unique: true
   },
   role: {
     type: String,
@@ -64,7 +66,15 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+/** Instance method on user schema to check if password is correct */
+userSchema.methods.verifyPassword = async function (userPassword, dbPassword) {
+  /** 'this' refers to document here*/
+  const correct = await promisify(bcrypt.compare)(userPassword, dbPassword);
+  return correct;
+}
+
 userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true });
 
 const User = mongoose.model('User', userSchema);
 
