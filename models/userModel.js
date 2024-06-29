@@ -35,7 +35,8 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     minLength: [3, 'username must be atleast 3 character long'],
-    unique: true
+    unique: true,
+    sparse: true
   },
   role: {
     type: String,
