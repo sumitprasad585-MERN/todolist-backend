@@ -163,6 +163,35 @@ const resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
+const updatePassword = catchAsync(async (req, res, next) => {
+  /** User is already authenticated, verify user's current password */
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+  if (!currentPassword || !newPassword || !confirmNewPassword)
+    return next(new AppError(400, 'Please enter current password, new password, and confirm new password'));
+
+  const user = await User.findById(req.user._id).select('+password');
+  const correct = await user.verifyPassword(currentPassword, user.password);
+
+  if (!correct)
+    return next(new AppError(400, 'Incorrect password'));
+
+  user.password = newPassword;
+  user.confirmPassword = confirmNewPassword;
+  await user.save({ validateBeforeSave: true });
+
+  /** Sign the token */
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
+
+  /** Send the token */
+  res.status(200).json({
+    status: 'success',
+    token
+  });
+});
+
 const restrictTo = (...roles) => {
   return (req, res, next) => {
 
@@ -175,5 +204,6 @@ module.exports = {
   protect,
   forgotPassword,
   resetPassword,
-  restrictTo
+  restrictTo,
+  updatePassword
 };
