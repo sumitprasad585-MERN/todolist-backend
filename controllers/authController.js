@@ -79,7 +79,7 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new AppError(401, 'You are not logged in, please login'));
 
   /** Verify the token. If token is malformed, then error would be thrown while decoding */
-  const decoded = await (jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   /** Check if user still exists and not deleted */
   const user = await User.findById(decoded.id);

@@ -80,7 +80,7 @@ userSchema.pre('save', function (next) {
 /** Instance method on user schema to check if password is correct */
 userSchema.methods.verifyPassword = async function (userPassword, dbPassword) {
   /** 'this' refers to document here*/
-  const correct = await promisify(bcrypt.compare)(userPassword, dbPassword);
+  const correct = await bcrypt.compare(userPassword, dbPassword);
   return correct;
 };
 
